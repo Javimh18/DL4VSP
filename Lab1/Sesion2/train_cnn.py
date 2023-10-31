@@ -67,23 +67,24 @@ def get_generators():
 def get_model(weights='imagenet'):
     # create the base pre-trained model InceptionV3 with pre-trained imagenet weights without including the top layers
 	# base_model =
-    base_model = ....
+    base_model = InceptionV3(include_top=False, weights=weights)
 
     x = base_model.output
     #Add a global spatial average pooling layer (Global average pooling operation for spatial data, "GlobalAveragePooling2D layer")
     #x =     
-    x = ....
+    x = GlobalAveragePooling2D(pool_size=(2, 2), strides=(1, 1), padding='valid')(x)
+
     #Add a fully-connected layer (densely-connected NN layer, "Dense layer") with 1024 units and relu activation
     #x = 
-    x = ....
+    x = Dense(1024, activation='relu')(x)
     #Add a logistic layer (densely-connected NN layer, "Dense layer") with the number of video classes units and softmax activation
     #predictins = 
-    predictions = ....
+    predictions = Dense(5, activation='softmax')(x)
 
     #Define or compose the final model to train (groups layers into an object with training and inference features, "The Model class")
     ### with base_model.input as input and predictions as output
     #model = 
-    model = ....
+    model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
 def freeze_all_but_top(model):
@@ -91,7 +92,7 @@ def freeze_all_but_top(model):
 	##By default all layers are initizlized as trainable
 	##Select the non trainable layers, i.e. layer.trainable = False
 	##In this case we freeze all convolutional InceptionV3 layers, i.e. only the lasy two layers are trainable		
-    for layer in model.layers ....
+    for layer in model.layers[:-2]
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
@@ -103,9 +104,9 @@ def freeze_all_but_mid_and_top(model):
     """After we fine-tune the dense layers, train deeper the mid and top layers."""
 	##Select the trainable and non trainable layers, i.e. layer.trainable = True or layer.trainable = False
 	##In this case we chose to train the top inception blocks, i.e. we will freeze the first 172 layers and unfreeze the rest:
-    for layer in model.layers ....
+    for layer in model.layers [:172]
         layer.trainable = False
-    for layer in model.layers ....
+    for layer in model.layers [172:]
         layer.trainable = True
 
     # we need to recompile the model for these modifications to take effect
