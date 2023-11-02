@@ -22,6 +22,7 @@ def main(training_log):
         plt.plot(accuracies_t, label='acc_train')
         plt.plot(accuracies_v, label='acc_val')
         plt.plot(cnn_benchmark, label='cnn_benchmark')
+        plt.title('Training for 5 classes')
         plt.legend()
         plt.savefig('inception-training-1698765901.0493932.png')
         plt.show()
