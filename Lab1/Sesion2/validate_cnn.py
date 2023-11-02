@@ -18,7 +18,7 @@ def main(nb_images=5):
     data = DataSet(seq_length, class_limit)
 
 
-    model = load_model('data/checkpoints/inception.009-0.18.hdf5')
+    model = load_model('data/checkpoints/inception.001-0.29.hdf5')
 
     # Get all our test images.
     images = glob.glob(os.path.join('data', 'test', '**', '*.jpg'))

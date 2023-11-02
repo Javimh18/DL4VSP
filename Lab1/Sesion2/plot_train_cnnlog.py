@@ -18,15 +18,17 @@ def main(training_log):
             accuracies_v.append(float(val_acc))
             cnn_benchmark.append(0.2)  # random
 
-        plt.plot(accuracies_t)
-        plt.plot(accuracies_v)
-        plt.plot(cnn_benchmark)
-        plt.savefig('inception-training-1602753951.8033223.png')
+        plt.figure(figsize=(10,6))
+        plt.plot(accuracies_t, label='acc_train')
+        plt.plot(accuracies_v, label='acc_val')
+        plt.plot(cnn_benchmark, label='cnn_benchmark')
+        plt.legend()
+        plt.savefig('inception-training-1698765901.0493932.png')
         plt.show()
         
 
 
 if __name__ == '__main__':
     
-    training_log = 'data/logs/inception-training-1602753951.8033223.log'
+    training_log = 'data/logs/inception-training-1698765901.0493932.log'
     main(training_log)

@@ -72,7 +72,7 @@ def get_model(weights='imagenet'):
     x = base_model.output
     #Add a global spatial average pooling layer (Global average pooling operation for spatial data, "GlobalAveragePooling2D layer")
     #x =     
-    x = GlobalAveragePooling2D(pool_size=(2, 2), strides=(1, 1), padding='valid')(x)
+    x = GlobalAveragePooling2D()(x)
 
     #Add a fully-connected layer (densely-connected NN layer, "Dense layer") with 1024 units and relu activation
     #x = 
@@ -92,7 +92,7 @@ def freeze_all_but_top(model):
 	##By default all layers are initizlized as trainable
 	##Select the non trainable layers, i.e. layer.trainable = False
 	##In this case we freeze all convolutional InceptionV3 layers, i.e. only the lasy two layers are trainable		
-    for layer in model.layers[:-2]
+    for layer in model.layers[:-2]:
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
@@ -104,9 +104,9 @@ def freeze_all_but_mid_and_top(model):
     """After we fine-tune the dense layers, train deeper the mid and top layers."""
 	##Select the trainable and non trainable layers, i.e. layer.trainable = True or layer.trainable = False
 	##In this case we chose to train the top inception blocks, i.e. we will freeze the first 172 layers and unfreeze the rest:
-    for layer in model.layers [:172]
+    for layer in model.layers [:172]:
         layer.trainable = False
-    for layer in model.layers [172:]
+    for layer in model.layers [172:]:
         layer.trainable = True
 
     # we need to recompile the model for these modifications to take effect
