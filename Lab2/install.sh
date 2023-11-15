@@ -13,7 +13,7 @@ pip install ninja yacs cython matplotlib tqdm opencv-python scipy
 
 # follow PyTorch installation in https://pytorch.org/get-started/locally/
 # we give the instructions for CUDA 10.0
-conda install pytorch=1.2.0 torchvision cudatoolkit=10.0 -c pytorch
+conda install pytorch=1.2.0 torchvision=0.4.0 cudatoolkit=10.0 -c pytorch
 
 export INSTALL_DIR=$PWD
 
