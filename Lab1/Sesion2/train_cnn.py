@@ -79,7 +79,7 @@ def get_model(weights='imagenet'):
     x = Dense(1024, activation='relu')(x)
     #Add a logistic layer (densely-connected NN layer, "Dense layer") with the number of video classes units and softmax activation
     #predictins = 
-    predictions = Dense(5, activation='softmax')(x)
+    predictions = Dense(class_limit, activation='softmax')(x)
 
     #Define or compose the final model to train (groups layers into an object with training and inference features, "The Model class")
     ### with base_model.input as input and predictions as output

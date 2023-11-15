@@ -12,13 +12,13 @@ from tensorflow.keras.models import load_model
 
 def main(nb_images=5):
     """Spot-check `nb_images` images."""
-    class_limit = 5  # int, can be 1-101 or None
+    class_limit = 20  # int, can be 1-101 or None
     seq_length = 5
 
     data = DataSet(seq_length, class_limit)
 
 
-    model = load_model('data/checkpoints/inception.001-0.29.hdf5')
+    model = load_model('data/checkpoints/inception.001-1.38.hdf5')
 
     # Get all our test images.
     images = glob.glob(os.path.join('data', 'test', '**', '*.jpg'))
