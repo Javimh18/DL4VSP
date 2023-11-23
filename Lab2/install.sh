@@ -2,8 +2,8 @@
 # for that, check that `which conda`, `which pip` and `which python` points to the
 # right path. From a clean conda env, this is what you need to do
 
-conda create --name MEGA -y python=3.7
-source activate MEGA
+conda create --name MEGA_v2 -y python=3.7
+source activate MEGA_v2
 
 # this installs the right pip and dependencies for the fresh python
 conda install ipython pip
@@ -37,7 +37,6 @@ python setup.py build_ext install
 
 # install PyTorch Detection
 cd $INSTALL_DIR
-git clone https://github.com/Scalsol/mega.pytorch.git
 cd mega.pytorch
 
 # the following will install the lib with
