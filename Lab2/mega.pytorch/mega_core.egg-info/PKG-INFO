@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: mega-core
+Version: 0.1
+Summary: video object detection in pytorch
+Home-page: https://github.com/Scalsol/mega.pytorch
+Author: Scalsol
+License-File: LICENSE
