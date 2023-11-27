@@ -7,11 +7,11 @@ In order to install the modified code from the ["Memory Enhanced Global-Local Ag
 3. Run the `install.sh` script
 4. Change to the mega.pytorch directory (`cd mega.pytorch`) and test it with the following commands:
     * Test it with BASE model from images directory:
-    
+         bash ```
         python demo/demo.py base configs/vid_R_101_C4_1x.yaml R_101.pth --suffix ".JPEG"\
             --visualize-path <image_folder> \
             --output-folder <output_folder>
-
+         ```
     * Test it with MEGA model from images directory:
 
         python demo/demo.py mega configs/MEGA/vid_R_101_C4_MEGA_1x.yaml MEGA_R_101.pth --suffix ".JPEG"\
