@@ -5,7 +5,7 @@ In order to install the modified code from the ["Memory Enhanced Global-Local Ag
 1. Download the [BASE](https://drive.google.com/file/d/1W17f9GC60rHU47lUeOEfU--Ra-LTw3Tq/view?usp=sharing) and [MEGA](https://drive.google.com/file/d/1ZnAdFafF1vW9Lnpw-RPF1AD_csw61lBY/view?usp=sharing) models. This will download two .pth files that are needed for running the demo.
 2. Place the R_101.pth and MEGA_R_101.pth files under the mega.pytorch folder.
 3. Run the `install.sh` script
-4. Test it with the following commands:
+4. Change to the mega.pytorch directory (`cd mega.pytorch`) and test it with the following commands:
     * Test it with BASE model from images directory:
     
         python demo/demo.py base configs/vid_R_101_C4_1x.yaml R_101.pth --suffix ".JPEG"\
@@ -30,7 +30,13 @@ In order to install the modified code from the ["Memory Enhanced Global-Local Ag
             --visualize-path <path_to_video> \
             --output-folder <path_to_output_folder> --output-video
 
-We provide a series of test videos and evidences of how the model should work. This folders are under the mega.pytorch directory. In the case of the test videos, we have `image_folder`, with the frames that compose a video and vid_folder with 4 different test videos. In the case of the evidences folder, we have the `vis_im*` and `vis_vid*` folders with several evidences from the test folders for you to compare your own results with the one obtained by us.
+We provide a series of test videos and evidences of how the model should work. This folders are under the mega.pytorch directory. In the case of the test videos, we have `image_folder`, with the frames that compose a video and vid_folder with 4 different test videos. In the case of the evidences folder, we have the `vis_im*` and `vis_vid*` folders with several evidences from the test folders for you to compare your own results with the one obtained by us. If you don't want any of this folders please run the following commands under the `mega.pytorch` directory:
+
+   * rm -rf vis_vid*
+   * rm -rf vis_im*
+   * rm -rf vid_folder*
+   * rm -rf image_folder*
+   * rm -rf visualization*
 
 One additional note on the commands is that, if the input is a video, the output can be both a video if the `--output-video` flag is activated or a sequences of frames as images is the option is not added.
 
