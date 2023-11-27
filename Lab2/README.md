@@ -30,7 +30,7 @@ In order to install the modified code from the ["Memory Enhanced Global-Local Ag
             --visualize-path <path_to_video> \
             --output-folder <path_to_output_folder> --output-video
 
-We provide a series of test videos and evidences of how the model should work. This folder are under the mega.pytorch directory. In the case of the test videos, we have image_folder, with the frames that compose a video and vid_folder with 4 different test videos. In the case of the evidences folder, we have the vis_im* and vis_vid* folders with several evidences from the test folders for you to compare your own results with the one obtained by us.
+We provide a series of test videos and evidences of how the model should work. This folders are under the mega.pytorch directory. In the case of the test videos, we have `image_folder`, with the frames that compose a video and vid_folder with 4 different test videos. In the case of the evidences folder, we have the `vis_im*` and `vis_vid*` folders with several evidences from the test folders for you to compare your own results with the one obtained by us.
 
 One additional note on the commands is that, if the input is a video, the output can be both a video if the `--output-video` flag is activated or a sequences of frames as images is the option is not added.
 
