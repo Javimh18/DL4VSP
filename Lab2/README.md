@@ -1,6 +1,6 @@
 # Lab2 for Video Object Detection
 
-In order to install the modified code from the ["Memory Enhanced Global-Local Aggregation for Video Object Detection"](https://arxiv.org/abs/2003.12063), known as MEGA, you will need to follow the following steps:
+In order to install the modified code from the ["Memory Enhanced Global-Local Aggregation for Video Object Detection"](https://arxiv.org/abs/2003.12063) repository, known as MEGA, you will need to follow the following steps:
 
 1. Download the [BASE](https://drive.google.com/file/d/1W17f9GC60rHU47lUeOEfU--Ra-LTw3Tq/view?usp=sharing) and [MEGA](https://drive.google.com/file/d/1ZnAdFafF1vW9Lnpw-RPF1AD_csw61lBY/view?usp=sharing) models. This will download two .pth files that are needed for running the demo.
 2. Place the R_101.pth and MEGA_R_101.pth files under the mega.pytorch folder.
