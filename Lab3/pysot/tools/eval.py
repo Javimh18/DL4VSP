@@ -109,9 +109,8 @@ def main():
             for ret in tqdm(pool.imap_unordered(benchmark.eval_precision,
                 trackers), desc='eval precision', total=len(trackers), ncols=100):
                 precision_ret.update(ret)
-        benchmark.show_result(success_ret, precision_ret,
-                show_video_level=args.show_video_level)
-    elif args.dataset in ['VOT2016', 'VOT2017', 'VOT2018’, 'VOT2019','VOT2018_selected']:
+                benchmark.show_result(success_ret, precision_ret,show_video_level=args.show_video_level)
+    elif args.dataset in ['VOT2016', 'VOT2017', 'VOT2018', 'VOT2019','VOT2018_selected']:
         dataset = VOTDataset(args.dataset, root)
         dataset.set_tracker(tracker_dir, trackers)
         ar_benchmark = AccuracyRobustnessBenchmark(dataset)

@@ -29,6 +29,8 @@ class VOTVideo(Video):
             camera_motion, illum_change, motion_change, size_change, occlusion, load_img=False):
         super(VOTVideo, self).__init__(name, root, video_dir,
                 init_rect, img_names, gt_rect, None, load_img)
+        
+        # storing metadata associated to the video we are loading
         self.tags= {'all': [1] * len(gt_rect)}
         self.tags['camera_motion'] = camera_motion
         self.tags['illum_change'] = illum_change
@@ -36,19 +38,15 @@ class VOTVideo(Video):
         self.tags['size_change'] = size_change
         self.tags['occlusion'] = occlusion
 
-        # TODO
-        # if len(self.gt_traj[0]) == 4:
-        #     self.gt_traj = [[x[0], x[1], x[0], x[1]+x[3]-1,
-        #                     x[0]+x[2]-1, x[1]+x[3]-1, x[0]+x[2]-1, x[1]]
-        #                         for x in self.gt_traj]
-
-        # empty tag
+        # defining empty tag; when no challenge happens in the frame we are analyzing
+        # we set empty to 1, but if any challenge is present in a frame, set it to 0
         all_tag = [v for k, v in self.tags.items() if len(v) > 0 ]
         self.tags['empty'] = np.all(1 - np.array(all_tag), axis=1).astype(np.int32).tolist()
-        # self.tags['empty'] = np.all(1 - np.array(list(self.tags.values())),
-        #         axis=1).astype(np.int32).tolist()
 
         self.tag_names = list(self.tags.keys())
+        
+        # the super class reads all the frames from the video by default, but if the
+        # load_img is set to False, they only read one frame to get the shape of the frames
         if not load_img:
             img_name = os.path.join(root, self.img_names[0])
             img = np.array(Image.open(img_name), np.uint8)
@@ -97,12 +95,18 @@ class VOTDataset(Dataset):
     """
     def __init__(self, name, dataset_root, load_img=False):
         super(VOTDataset, self).__init__(name, dataset_root)
+        
+        # Reading the JSON metadata dataset file (VOT2018.json)
         with open(os.path.join(dataset_root, name+'.json'), 'r') as f:
             meta_data = json.load(f)
 
-        # load videos
+        # tqdm as a iterator to go through the video names (keys) 
+        # and all the metadata associated with it
         pbar = tqdm(meta_data.keys(), desc='loading '+name, ncols=100)
         self.videos = {}
+        
+        # For each video we create a VOTVideo object that stores all 
+        # the metadata information associated with it as a dictionary
         for video in pbar:
             pbar.set_postfix_str(video)
             self.videos[video] = VOTVideo(video,
@@ -118,6 +122,7 @@ class VOTDataset(Dataset):
                                           meta_data[video]['occlusion'],
                                           load_img=load_img)
 
+        # Tags associated to the different challenges of the dataset
         self.tags = ['all', 'camera_motion', 'illum_change', 'motion_change',
                      'size_change', 'occlusion', 'empty']
 

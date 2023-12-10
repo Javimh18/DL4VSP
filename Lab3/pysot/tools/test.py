@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 import argparse
 import os
 
-import cv2
 import torch
 import numpy as np
 
@@ -19,6 +18,7 @@ from pysot.utils.bbox import get_axis_aligned_bbox
 from pysot.utils.model_load import load_pretrain
 from toolkit.datasets import DatasetFactory
 from toolkit.utils.region import vot_overlap, vot_float2str
+import cv2
 
 
 parser = argparse.ArgumentParser(description='siamrpn tracking')
