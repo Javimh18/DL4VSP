@@ -6,3 +6,5 @@
 **/cityscapesScripts
 **/cocoapi
 *.pth
+**/.DS_Store
+Lab3/pysot/testing_dataset/
