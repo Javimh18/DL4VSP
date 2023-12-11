@@ -20,7 +20,7 @@ class EAOBenchmark:
             self.low = 46
             self.high = 291
             self.peak = 128
-        elif dataset.name == 'VOT2018' or dataset.name == 'VOT2018_selected' or dataset.name == 'VOT2017':
+        elif dataset.name == 'VOT2018' or dataset.name == 'VOT2018_selected' or dataset.name == 'VOT2017' or dataset.name == 'CAMERA_MOTION':
             self.low = 100
             self.high = 356
             self.peak =  160

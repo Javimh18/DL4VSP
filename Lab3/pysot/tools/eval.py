@@ -25,6 +25,8 @@ parser.add_argument('--tracker_prefix', '-t', default='',
                     type=str, help='tracker name')
 parser.add_argument('--show_video_level', '-s', dest='show_video_level',
                     action='store_true')
+parser.add_argument('--challenge', help='wether you want to test it on the challenge dataset (True or False)',
+                    type=str)
 parser.set_defaults(show_video_level=False)
 args = parser.parse_args()
 
@@ -39,8 +41,13 @@ def main():
     assert len(trackers) > 0
     args.num = min(args.num, len(trackers))
 
-    root = os.path.realpath(os.path.join(os.path.dirname(__file__),
-                            '../testing_dataset'))
+    if args.challenge == 'True':
+        root = os.path.realpath(os.path.join(os.path.dirname(__file__),
+                                '../testing_dataset/challenges'))
+    else: 
+        root = os.path.realpath(os.path.join(os.path.dirname(__file__),
+                                '../testing_dataset'))
+
     root = os.path.join(root, args.dataset)
     if 'OTB' in args.dataset:
         dataset = OTBDataset(args.dataset, root)
@@ -110,7 +117,7 @@ def main():
                 trackers), desc='eval precision', total=len(trackers), ncols=100):
                 precision_ret.update(ret)
                 benchmark.show_result(success_ret, precision_ret,show_video_level=args.show_video_level)
-    elif args.dataset in ['VOT2016', 'VOT2017', 'VOT2018', 'VOT2019','VOT2018_selected']:
+    elif args.dataset in ['VOT2016', 'VOT2017', 'VOT2018', 'VOT2019','VOT2018_selected', 'CAMERA_MOTION', 'ILLUM_CHANGE', 'MOTION_CHANGE', 'OCCLUSION', 'SIZE_CHANGE']:
         dataset = VOTDataset(args.dataset, root)
         dataset.set_tracker(tracker_dir, trackers)
         ar_benchmark = AccuracyRobustnessBenchmark(dataset)
