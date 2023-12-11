@@ -36,7 +36,7 @@ class DatasetFactory(object):
             dataset = TrackingNetDataset(**kwargs)
         elif 'GOT-10k' == name:
             dataset = GOT10kDataset(**kwargs)
-        elif 'challenge/' in name:
+        elif 'CAMERA_MOTION' == name or 'ILLUM_CHANGE' == name or 'MOTION_CHANGE' == name or 'OCCLUSION' == name or 'SIZE_CHANGE' == name:
             # The challenge dataset is a subset of the VOT2018, so
             # we reuse the VOTDataset class
             dataset = VOTDataset(**kwargs)
