@@ -36,6 +36,10 @@ class DatasetFactory(object):
             dataset = TrackingNetDataset(**kwargs)
         elif 'GOT-10k' == name:
             dataset = GOT10kDataset(**kwargs)
+        elif 'challenge/' in name:
+            # The challenge dataset is a subset of the VOT2018, so
+            # we reuse the VOTDataset class
+            dataset = VOTDataset(**kwargs)
         else:
             raise Exception("unknow dataset {}".format(kwargs['name']))
         return dataset
