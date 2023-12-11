@@ -67,6 +67,8 @@ python setup.py build_ext --inplace
 
 #### Get the dataset and decompress it 
 ```bash
+# If testing_dataset folder not present
+mkdir <folder_of_choice>/pysot/testing_dataset/
 cd <folder_of_choice>/pysot/testing_dataset/
 wget http://www-vpu.eps.uam.es/~jcs/DLVSP/vot/vot2018.zip
 
@@ -79,12 +81,14 @@ mv vot2018 VOT2018
 
 ```bash
 cd <folder_of_choice>/pysot/testing_dataset/VOT2018
-wget http://wwwvpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
+wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
 ```
 
 #### Get the pretrained model of SiamRPN
 ```bash
-wget http://wwwvpu.eps.uam.es/~jcs/DLVSP/pysot_nets/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth
+# The folder /experiments/siamrpn_alex_dwxcorr/ may not be created,
+# create it by running mkdir -p ~/pysot/experiments/siamrpn_alex_dwxcorr/
+wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_nets/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth
 mv siamrpn_alex_dwxcorr.pth ~/pysot/experiments/siamrpn_alex_dwxcorr/
 ```
 
