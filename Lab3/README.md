@@ -67,6 +67,8 @@ python setup.py build_ext --inplace
 
 #### Get the dataset and decompress it 
 ```bash
+# If testing_dataset folder not present
+mkdir <folder_of_choice>/pysot/testing_dataset/
 cd <folder_of_choice>/pysot/testing_dataset/
 wget http://www-vpu.eps.uam.es/~jcs/DLVSP/vot/vot2018.zip
 
