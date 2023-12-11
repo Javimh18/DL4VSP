@@ -44,7 +44,7 @@ def main():
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     if args.challenge == 'True':
-        dataset_root = os.path.join(cur_dir, '../testing_dataset/challenge', args.dataset)
+        dataset_root = os.path.join(cur_dir, '../testing_dataset/challenges', args.dataset)
     else:
         dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
 
