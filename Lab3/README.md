@@ -107,3 +107,8 @@ Test videos that are most challenging in categories:
 ```bash
 python extract_challenge.py --dataset_path testing_dataset/VOT2018 --json_file VOT2018.json --dest_path testing_dataset/challenges
 ```
+
+#### Run challenge dataset
+```bash
+python -u tools/test_challenge.py --snapshot ./experiments/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth --dataset <challenge_subset> --config ./experiments/siamrpn_alex_dwxcorr/config.yaml
+```
