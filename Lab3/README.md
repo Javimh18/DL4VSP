@@ -86,7 +86,9 @@ wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
 
 #### Get the pretrained model of SiamRPN
 ```bash
-wget http://wwwvpu.eps.uam.es/~jcs/DLVSP/pysot_nets/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth
+# The folder /experiments/siamrpn_alex_dwxcorr/ may not be created,
+# create it by running mkdir -p ~/pysot/experiments/siamrpn_alex_dwxcorr/
+wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_nets/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth
 mv siamrpn_alex_dwxcorr.pth ~/pysot/experiments/siamrpn_alex_dwxcorr/
 ```
 
