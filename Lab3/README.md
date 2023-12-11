@@ -81,7 +81,7 @@ mv vot2018 VOT2018
 
 ```bash
 cd <folder_of_choice>/pysot/testing_dataset/VOT2018
-wget http://wwwvpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
+wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
 ```
 
 #### Get the pretrained model of SiamRPN
