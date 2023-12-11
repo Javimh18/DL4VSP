@@ -32,6 +32,8 @@ parser.add_argument('--video', default='', type=str,
         help='eval one special video')
 parser.add_argument('--vis', action='store_true',
         help='whether visualzie result')
+parser.add_argument('--challenge', type=str,
+        help='wether you want to test it on the challenge dataset (True or False)')
 args = parser.parse_args()
 
 torch.set_num_threads(1)
@@ -41,7 +43,10 @@ def main():
     cfg.merge_from_file(args.config)
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
+    if args.challenge == 'True':
+        dataset_root = os.path.join(cur_dir, '../testing_dataset/challenge', args.dataset)
+    else:
+        dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
 
     # create model
     model = ModelBuilder()
@@ -59,7 +64,7 @@ def main():
 
     model_name = args.snapshot.split('/')[-1].split('.')[0]
     total_lost = 0
-    if args.dataset in ['VOT2016', 'VOT2018', 'VOT2019','VOT2018_selected']:
+    if args.dataset in ['VOT2016', 'VOT2018', 'VOT2019','VOT2018_selected', 'CAMERA_MOTION', 'ILLUM_CHANGE', 'MOTION_CHANGE', 'OCCLUSION', 'SIZE_CHANGE']:
         # restart tracking
         for v_idx, video in enumerate(dataset):
             if args.video != '':
