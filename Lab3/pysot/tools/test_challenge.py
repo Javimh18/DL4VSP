@@ -132,3 +132,7 @@ def main():
                 v_idx+1, video.name, toc, idx / toc, lost_number))
         total_lost += lost_number
     print("{:s} total lost: {:d}".format(model_name, total_lost))
+    
+
+if __name__ == '__main__':
+    main()
