@@ -116,3 +116,8 @@ python extract_challenge.py --dataset_path testing_dataset/VOT2018 --json_file V
 ```bash
 python -u tools/test.py --snapshot ./experiments/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth --dataset <challenge_subset> --config ./experiments/siamrpn_alex_dwxcorr/config.yaml --challenge True
 ```
+
+#### Run evaluation for challenge dataset
+```bash
+python tools/eval.py --tracker_path ./results --dataset CAMERA_MOTION --num 1 --tracker_prefix siamrpn_alex_dwxcorr --challenge True
+```
