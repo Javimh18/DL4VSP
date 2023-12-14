@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import pandas as pd
 import argparse
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Challenge video extraction')
 parser.add_argument('--path_to_dataset', type=str,
@@ -25,7 +26,47 @@ if __name__ == '__main__':
         df_combined = pd.concat([df_combined, df_temp], ignore_index=True)
     df_combined['challenge'] = challenge_list# add the challenge to the scores  
     
-    print(df_combined)
+    plt.figure(figsize=(10, 10))
+    
+    plt.subplot(2, 2, 1)
+    plt.bar(df_combined['challenge'], df_combined['Accuracy'], label='Challenge vs Accuracy')
+    plt.xlabel('Challenge')
+    plt.ylabel('Accuracy')
+    plt.title('Challenge vs Accuracy')
+    plt.grid()
+    plt.xlim(0, 1.2)
+    plt.legend()
+    
+    plt.subplot(2, 2, 2)
+    plt.bar(df_combined['challenge'], df_combined['LostNumber'], label='Challenge vs LostNumber')
+    plt.xlabel('Challenge')
+    plt.ylabel('LostNumber')
+    plt.title(f'Challenge vs LostNumber')
+    plt.xlim(0, 1.2)
+    plt.grid()
+    plt.legend()
+    
+    plt.subplot(2, 2, 3)
+    plt.bar(df_combined['challenge'], df_combined['Robustness'], label='Challenge vs Robustness')
+    plt.xlabel('Challenge')
+    plt.ylabel('Robustness')
+    plt.title(f'Challenge vs Robustness')
+    plt.grid()
+    plt.xlim(0, 1.2)
+    plt.legend()
+    
+    plt.subplot(2, 2, 3)
+    plt.bar(df_combined['challenge'], df_combined['EOA'], label='Challenge vs EOA')
+    plt.xlabel('Challenge')
+    plt.ylabel('EOA')
+    plt.title(f'Challenge vs EOA')
+    plt.grid()
+    plt.xlim(0, 1.2)
+    plt.legend()
+
+    plt.tight_layout()
+
+    plt.show()
     
 
 
