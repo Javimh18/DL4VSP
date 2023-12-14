@@ -47,8 +47,9 @@ for challenge in "${challenges[@]}"; do
                                         --path_to_save "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}"
 
     # plots metrics of the challenges for the whole dataset 
-    python tools/plot_stats_challenge.py --path_to_json_file "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}/${challenge}.json" \
-                                        --path_to_stats_file "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}/specific_info.csv"
+    python tools/plot_stats_challenge.py --path_to_json_file "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}/${challenge}.json" --path_to_save_fig "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}" \
+                                         --path_to_stats_file "./testing_dataset/top${cutoff_challenge}_vids_challenge/${challenge}/specific_info.csv" 
+                                         
 
 done
 
