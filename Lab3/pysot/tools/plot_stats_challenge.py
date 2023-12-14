@@ -58,22 +58,21 @@ def plot_extracted_stats_challenge(df_stats, challenge):
     plt.scatter(df_stats['ratio_of_challenge'], df_stats['Acc'], label='Acc vs ratio')
     plt.xlabel('ratio')
     plt.ylabel('Acc')
-    plt.title(f'Gráfico Scatter: ratio vs Acc for challenge {challenge}')
+    plt.title(f'ratio vs Acc for challenge {challenge}')
     plt.legend()
     plt.show()
     
     plt.scatter(df_stats['ratio_of_challenge'], df_stats['LN'], label='LN vs ratio', color='red')
     plt.xlabel('ratio')
     plt.ylabel('LN')
-    plt.title(f'Gráfico Scatter: ratio vs LN for challenge {challenge}')
+    plt.title(f'ratio vs LN for challenge {challenge}')
     plt.legend()
     plt.show()
 
 if __name__ == '__main__':
     dict_df_stats_per_challenge = extract_and_compare(args.path_to_json_file, args.path_to_stats_file)
-    #print(dict_df_stats_per_challenge['occlusion'])
     
-    if type(dict_df_stats_per_challenge) == 'dict':
+    if type(dict_df_stats_per_challenge) == dict:
         for k,v in dict_df_stats_per_challenge.items():
             plot_extracted_stats_challenge(v, k)
     else:
