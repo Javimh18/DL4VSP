@@ -28,6 +28,10 @@ class EAOBenchmark:
             self.low = 108
             self.high = 371
             self.peak = 168
+        elif dataset.name == 'CAMERA_MOTION' or dataset.name == 'OCCLUSION' or dataset.name == 'MOTION_CHANGE' or dataset.name == 'SIZE_CHANGE'  or dataset.name == 'ILLUM_CHANGE':
+            self.low = 100
+            self.high = 356
+            self.peak =  160
 
     def eval(self, eval_trackers=None):
         """
