@@ -6,12 +6,15 @@ import numpy as np
 import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 parser = argparse.ArgumentParser(description='Challenge video extraction')
 parser.add_argument('--path_to_json_file', type=str,
         help='Path of the json file with the challenge metadata info.')
 parser.add_argument('--path_to_stats_file', type=str,
         help='Path of csv file with the stats of the videos.')
+parser.add_argument('--path_to_save_fig', type=str,
+        help='Path where we save the figures with the stats.')
 args = parser.parse_args()
 
 def extract_and_compare(path_to_json_file, path_to_stats_file):
@@ -54,32 +57,30 @@ def extract_and_compare(path_to_json_file, path_to_stats_file):
     return dict_df_stats_per_challenge
 
 def plot_extracted_stats_challenge(df_stats, challenge):
-    
-    plt.figure(figsize=(10, 5))
 
-    plt.subplot(1, 2, 1)
-    plt.scatter(df_stats['ratio_of_challenge'], df_stats['Acc'], label='Acc vs ratio')
-    plt.xlabel('ratio')
-    plt.ylabel('Acc')
-    plt.title(f'ratio vs Acc for challenge {challenge}')
-    plt.grid()
-    plt.xlim(0, 1.2)
-    plt.ylim(0, 1)
-    plt.legend()
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    # Plot for score1
+    sns.scatterplot(x='ratio_of_challenge', y='Acc', data=df_stats, ax=axes[0], color='blue')
+    axes[0].set_title(f"ratio vs Acc for challenge {challenge}")
+    axes[0].grid()
+    axes[0].set(ylim=(0, 1.2))
+    axes[0].set(xlim=(0, 1.2))
+    axes[0].set(ylabel="Accuracy")
+    axes[0].set(xlabel="Ratio of challenge")
     
-    plt.subplot(1, 2, 2)
-    plt.scatter(df_stats['ratio_of_challenge'], df_stats['LN'], label='LN vs ratio', color='red')
-    plt.xlabel('ratio')
-    plt.ylabel('LN')
-    plt.title(f'ratio vs LN for challenge {challenge}')
-    plt.xlim(0, 1.2)
-    plt.ylim(0, 10)
-    plt.grid()
-    plt.legend()
+
+    # Plot for score2
+    sns.scatterplot(x='ratio_of_challenge', y='LN', data=df_stats, ax=axes[1], color='red')
+    axes[1].set_title(f"ratio vs LN for challenge {challenge}")
+    axes[1].grid()
+    axes[1].set(ylim=(0, 9))
+    axes[1].set(xlim=(0, 1.2))
+    axes[1].set(ylabel="LN")
+    axes[1].set(xlabel="Ratio of challenge")
 
     plt.tight_layout()
-
-    plt.show()
+    plt.savefig(os.path.join(args.path_to_save_fig, challenge))
 
 if __name__ == '__main__':
     dict_df_stats_per_challenge = extract_and_compare(args.path_to_json_file, args.path_to_stats_file)

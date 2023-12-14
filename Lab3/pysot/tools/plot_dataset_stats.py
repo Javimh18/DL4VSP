@@ -1,9 +1,9 @@
 import os
 import csv
-import numpy as np
 import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 parser = argparse.ArgumentParser(description='Challenge video extraction')
 parser.add_argument('--path_to_dataset', type=str,
@@ -24,49 +24,41 @@ if __name__ == '__main__':
         file_path = os.path.join(args.path_to_dataset, challenge, GENERAL_DATA_FILE)
         df_temp = pd.read_csv(file_path)  # Reads into a temp df
         df_combined = pd.concat([df_combined, df_temp], ignore_index=True)
-    df_combined['challenge'] = challenge_list# add the challenge to the scores  
-    
-    plt.figure(figsize=(10, 10))
-    
-    plt.subplot(2, 2, 1)
-    plt.bar(df_combined['challenge'], df_combined['Accuracy'], label='Challenge vs Accuracy')
-    plt.xlabel('Challenge')
-    plt.ylabel('Accuracy')
-    plt.title('Challenge vs Accuracy')
-    plt.grid()
-    plt.xlim(0, 1.2)
-    plt.legend()
-    
-    plt.subplot(2, 2, 2)
-    plt.bar(df_combined['challenge'], df_combined['LostNumber'], label='Challenge vs LostNumber')
-    plt.xlabel('Challenge')
-    plt.ylabel('LostNumber')
-    plt.title(f'Challenge vs LostNumber')
-    plt.xlim(0, 1.2)
-    plt.grid()
-    plt.legend()
-    
-    plt.subplot(2, 2, 3)
-    plt.bar(df_combined['challenge'], df_combined['Robustness'], label='Challenge vs Robustness')
-    plt.xlabel('Challenge')
-    plt.ylabel('Robustness')
-    plt.title(f'Challenge vs Robustness')
-    plt.grid()
-    plt.xlim(0, 1.2)
-    plt.legend()
-    
-    plt.subplot(2, 2, 3)
-    plt.bar(df_combined['challenge'], df_combined['EOA'], label='Challenge vs EOA')
-    plt.xlabel('Challenge')
-    plt.ylabel('EOA')
-    plt.title(f'Challenge vs EOA')
-    plt.grid()
-    plt.xlim(0, 1.2)
-    plt.legend()
+    df_combined['Challenge'] = challenge_list# add the challenge to the scores  
 
-    plt.tight_layout()
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 15))
 
-    plt.show()
+    # Gráfico de Barras para Accuracy
+    sns.barplot(x='Challenge', y='Accuracy', data=df_combined, hue=df_combined['Challenge'], ax=axes[0,0])
+    axes[0,0].set_title('Challenges vs Accuracy')
+    axes[0,0].set(ylabel="Accuracy")
+    axes[0,0].set(xlabel="Ratio of challenge")
+
+    # Gráfico de Barras para Recall
+    sns.barplot(x='Challenge', y='LostNumber', data=df_combined, hue=df_combined['Challenge'], ax=axes[0,1])
+    axes[0,1].set_title('Challenges vs Number of frames lost')
+    axes[0,1].set(ylabel="LostNumber")
+    axes[0,1].set(xlabel="Ratio of challenge")
+
+    # Gráfico de Barras para F1-score
+    sns.barplot(x='Challenge', y='Robustness', data=df_combined, hue=df_combined['Challenge'], ax=axes[1,0])
+    axes[1,0].set_title('Challenges vs Robustness')
+    axes[0,1].set(ylabel="Robustness")
+    axes[0,1].set(xlabel="Ratio of challenge")
+
+    sns.barplot(x='Challenge', y='EAO', data=df_combined, hue=df_combined['Challenge'], ax=axes[1,1])
+    axes[1,1].set_title('Challenges vs EAO')
+    axes[1,1].set(ylabel="EAO")
+    axes[1,1].set(xlabel="Ratio of challenge")
+
+    # Ajustes adicionales
+    for ax in axes.flatten():
+        ax.set_ylabel('Score')
+        ax.set_xlabel('Challenge')
+
+    plt.tight_layout()  # Ajusta automáticamente la disposición de los subgráficos
+    plt.savefig(os.path.join(args.path_to_dataset, "general_stats.png"))
+    
     
 
 
