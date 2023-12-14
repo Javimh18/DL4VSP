@@ -60,6 +60,7 @@ pip install pyyaml yacs tqdm colorama matplotlib tensorboardX
 
 #### Build extensions
 ```bash
+# run this command inside the pysot directory
 python setup.py build_ext --inplace
 ```
 
