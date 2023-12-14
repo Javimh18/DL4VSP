@@ -30,13 +30,14 @@ def process_specific_stats(path_to_file, path_to_save):
         VOT_general_info = info_splits[:2]
         VOT_specific_info = info_splits[3:]
     
+    
     # dumping the general information
-    with open(path_to_save + 'general_info.csv', "a") as fd:
+    with open(os.path.join(path_to_save,'general_info.csv'), "w") as fd:
         for s in VOT_general_info:
             fd.write(s+'\n')
             
     # dumping the specific information
-    with open(path_to_save + 'specific_info.csv', "a") as fd:
+    with open(os.path.join(path_to_save,'specific_info.csv'), "w") as fd:
         for s in VOT_specific_info:
             fd.write(s+'\n')
 

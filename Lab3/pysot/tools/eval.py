@@ -34,22 +34,25 @@ args = parser.parse_args()
 
 
 def main():
-    tracker_dir = os.path.join(args.tracker_path, args.dataset)
-    trackers = glob(os.path.join(args.tracker_path,
-                                 args.dataset,
-                                 args.tracker_prefix+'*'))
-    trackers = [os.path.basename(x) for x in trackers]
 
-    assert len(trackers) > 0
-    args.num = min(args.num, len(trackers))
-
+   # Depending on if we are using the challenge dataset (for top<challenge_cutoff>_vids_challenge)
+   # Or a normal dataset, we give root and trackers variables one value or another.  
     if args.challenge == 'True':
         root = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                              '../testing_dataset',
-                                             f"top{args.challenge_cutoff}_vids_challenge", args.dataset))
+                                             f"top{args.challenge_cutoff}_vids_challenge"))
+        tracker_dir = os.path.join(args.tracker_path, f"top{args.challenge_cutoff}_vids_challenge", args.dataset)
     else: 
         root = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                 '../testing_dataset'))
+        tracker_dir = os.path.join(args.tracker_path, args.dataset)
+
+    trackers = glob(os.path.join(tracker_dir,
+                                 args.tracker_prefix+'*'))
+
+    trackers = [os.path.basename(x) for x in trackers]
+    assert len(trackers) > 0
+    args.num = min(args.num, len(trackers))
 
     root = os.path.join(root, args.dataset)
     if 'OTB' in args.dataset:

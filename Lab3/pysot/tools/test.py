@@ -125,8 +125,12 @@ def main():
                     cv2.waitKey(1)
             toc /= cv2.getTickFrequency()
             # save results
-            video_path = os.path.join('results', args.dataset, model_name,
-                    'baseline', video.name)
+            if "top" in dataset_root:# case where we have several cutoffs for the challenge dataset (top<cutoff>_vids_challenge) 
+                video_path = os.path.join('results', f"top{args.challenge_cutoff}_vids_challenge", args.dataset, model_name,
+                        'baseline', video.name)
+            else:
+                video_path = os.path.join('results', args.dataset, model_name,
+                        'baseline', video.name)
             if not os.path.isdir(video_path):
                 os.makedirs(video_path)
             result_path = os.path.join(video_path, '{}_001.txt'.format(video.name))
