@@ -34,6 +34,8 @@ parser.add_argument('--vis', action='store_true',
         help='whether visualzie result')
 parser.add_argument('--challenge', type=str,
         help='wether you want to test it on the challenge dataset (True or False)')
+parser.add_argument('--challenge_cutoff', type=int,
+        help='The cutoff of the challenge (only applies if --challenge == "True")')
 args = parser.parse_args()
 
 torch.set_num_threads(1)
@@ -44,7 +46,7 @@ def main():
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     if args.challenge == 'True':
-        dataset_root = os.path.join(cur_dir, '../testing_dataset/challenges', args.dataset)
+        dataset_root = os.path.join(cur_dir, '../testing_dataset', f"top{args.challenge_cutoff}_vids_challenge", args.dataset)
     else:
         dataset_root = os.path.join(cur_dir, '../testing_dataset', args.dataset)
 

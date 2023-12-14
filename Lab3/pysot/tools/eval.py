@@ -27,6 +27,8 @@ parser.add_argument('--show_video_level', '-s', dest='show_video_level',
                     action='store_true')
 parser.add_argument('--challenge', help='wether you want to test it on the challenge dataset (True or False)',
                     type=str)
+parser.add_argument('--challenge_cutoff', type=int,
+        help='The cutoff of the challenge (only applies if --challenge == "True")')
 parser.set_defaults(show_video_level=False)
 args = parser.parse_args()
 
@@ -43,7 +45,8 @@ def main():
 
     if args.challenge == 'True':
         root = os.path.realpath(os.path.join(os.path.dirname(__file__),
-                                '../testing_dataset/challenges'))
+                                             '../testing_dataset',
+                                             f"top{args.challenge_cutoff}_vids_challenge", args.dataset))
     else: 
         root = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                 '../testing_dataset'))

@@ -12,7 +12,7 @@ parser.add_argument('--path_to_save', type=str,
         help='File where we are going to save the csv.')
 args = parser.parse_args()
 
-def process_stats(path_to_file, path_to_save):
+def process_specific_stats(path_to_file, path_to_save):
     with open(path_to_file, "r") as fd:
         stream = fd.read()
         stream_splits = stream.split('\n')
@@ -41,4 +41,4 @@ def process_stats(path_to_file, path_to_save):
             fd.write(s+'\n')
 
 if __name__ == '__main__':
-    process_stats(args.path_to_file, args.path_to_save)
+    process_specific_stats(args.path_to_file, args.path_to_save)
