@@ -55,18 +55,30 @@ def extract_and_compare(path_to_json_file, path_to_stats_file):
 
 def plot_extracted_stats_challenge(df_stats, challenge):
     
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 2, 1)
     plt.scatter(df_stats['ratio_of_challenge'], df_stats['Acc'], label='Acc vs ratio')
     plt.xlabel('ratio')
     plt.ylabel('Acc')
     plt.title(f'ratio vs Acc for challenge {challenge}')
+    plt.grid()
+    plt.xlim(0, 1.2)
+    plt.ylim(0, 1)
     plt.legend()
-    plt.show()
     
+    plt.subplot(1, 2, 2)
     plt.scatter(df_stats['ratio_of_challenge'], df_stats['LN'], label='LN vs ratio', color='red')
     plt.xlabel('ratio')
     plt.ylabel('LN')
     plt.title(f'ratio vs LN for challenge {challenge}')
+    plt.xlim(0, 1.2)
+    plt.ylim(0, 10)
+    plt.grid()
     plt.legend()
+
+    plt.tight_layout()
+
     plt.show()
 
 if __name__ == '__main__':
