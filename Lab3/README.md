@@ -88,10 +88,18 @@ wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_dataset/VOT2018.json
 #### Get the pretrained model of SiamRPN
 ```bash
 # The folder /experiments/siamrpn_alex_dwxcorr/ may not be created,
-# create it by running mkdir -p ~/pysot/experiments/siamrpn_alex_dwxcorr/
+# create it by running mkdir -p <folder_of_choice>/pysot/experiments/siamrpn_alex_dwxcorr/
 wget http://www-vpu.eps.uam.es/~jcs/DLVSP/pysot_nets/siamrpn_alex_dwxcorr/siamrpn_alex_dwxcorr.pth
-mv siamrpn_alex_dwxcorr.pth ~/pysot/experiments/siamrpn_alex_dwxcorr/
+mv siamrpn_alex_dwxcorr.pth <folder_of_choice>/pysot/experiments/siamrpn_alex_dwxcorr/
 ```
+
+# Store the model configuration
+For the model to run, we are going to need the config.yaml file. Then run the following commands:
+```bash
+cd <folder_of_choice>/pysot/experiments/siamrpn_alex_dwxcorr/
+nano config.yaml
+```
+Copy in the text editor the following yaml code, and we are good to go.
 
 ```yaml
 META_ARC: "siamrpn_alex_dwxcorr"
@@ -159,4 +167,11 @@ python -u tools/test.py --snapshot ./experiments/siamrpn_alex_dwxcorr/siamrpn_al
 #### Run evaluation for challenge dataset
 ```bash
 python tools/eval.py --tracker_path ./results --dataset CAMERA_MOTION --num 1 --tracker_prefix siamrpn_alex_dwxcorr --challenge True
+```
+
+#### Complete run. Full extraction of challenge subsets + metrics extraction and evaluation.
+
+```bash
+cd <folder_of_choice>/pysot
+./extract_stats_plot.sh
 ```
