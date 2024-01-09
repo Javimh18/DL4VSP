@@ -9,3 +9,4 @@
 **/.DS_Store
 Lab3/pysot/testing_dataset/
 *.model
+**/output
