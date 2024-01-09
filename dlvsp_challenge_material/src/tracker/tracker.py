@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 import motmetrics as mm
 from torchvision.ops.boxes import clip_boxes_to_image, nms
+from munkres import Munkres, print_matrix
 
 
 class Tracker:
@@ -49,8 +50,45 @@ class Tracker:
 		return box
 
 	def data_association(self, boxes, scores):
-		self.tracks = []
-		self.add(boxes, scores)
+		if self.tracks:
+			track_ids = [t.id for t in self.tracks]
+			track_boxes = np.stack([t.box.numpy() for t in self.tracks], axis=0)
+
+			# compute distance based on IoU (distance=1-IoU)
+			distance = mm.distances.iou_matrix(track_boxes, boxes.numpy(), max_iou=0.5)
+		
+			for i in range(len(distance)):
+				for j in range(len(distance[0])):
+					if np.isnan(distance[i][j]) == True:
+						distance[i][j] = np.inf
+
+			print(distance.shape)
+			# Hungarian Algo
+			m = Munkres()
+			indexes = m.compute(distance)
+
+			# update existing tracks
+			remove_track_ids = []
+			for t, dist in zip(self.tracks, distance):
+				if np.isinf(dist).all():
+					remove_track_ids.append(t.id)
+				else:
+					match_id = np.nanargmin(dist)
+					t.box = boxes[match_id]
+			self.tracks = [t for t in self.tracks
+					if t.id not in remove_track_ids]
+
+			# add new tracks
+			new_boxes = []
+			new_scores = []
+			for i, dist in enumerate(np.transpose(distance)):
+				if np.isinf(dist).all():
+					new_boxes.append(boxes[i])
+					new_scores.append(scores[i])
+			self.add(new_boxes, new_scores)
+
+		else:
+			self.add(boxes, scores)
 
 	def step(self, frame):
 		"""This function should be called every timestep to perform tracking with a blob
