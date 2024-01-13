@@ -8,7 +8,6 @@ from collections import defaultdict
 from os import path as osp
 
 import cv2
-import matplotlib
 import matplotlib.pyplot as plt
 import motmetrics as mm
 import numpy as np
@@ -261,22 +260,3 @@ def rescale_bboxes(self, out_bbox, size):
     b = b * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     return b
     
-def detect(self, im, transform):
-    # mean-std normalize the input image (batch-size: 1)
-    img = transform(im).unsqueeze(0)
-
-    # demo model only support by default images with aspect ratio between 0.5 and 2
-    # if you want to use images with an aspect ratio outside this range
-    # rescale your image so that the maximum size is at most 1333 for best results
-    assert img.shape[-2] <= 1600 and img.shape[-1] <= 1600, 'demo model only supports images up to 1600 pixels on each side'
-
-    # propagate through the model
-    outputs = self(img)
-
-    # keep only predictions with 0.7+ confidence
-    probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
-    keep = probas.max(-1).values > 0.7
-
-    # convert boxes from [0; 1] to image scales
-    bboxes_scaled = self.rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
-    return probas[keep], bboxes_scaled

@@ -39,7 +39,6 @@ class MOT16ObjDetect(torch.utils.data.Dataset):
             seq_len = int(config['Sequence']['seqLength'])
             im_ext = config['Sequence']['imExt']
             im_dir = config['Sequence']['imDir']
-
             _imDir = os.path.join(path, im_dir)
 
             for i in range(1, seq_len + 1):
@@ -124,7 +123,7 @@ class MOT16ObjDetect(torch.utils.data.Dataset):
         img_path = self._img_paths[idx]
         # mask_path = os.path.join(self.root, "PedMasks", self.masks[idx])
         img = Image.open(img_path).convert("RGB")
-
+        
         target = self._get_annotation(idx)
 
         if self.transforms is not None:
