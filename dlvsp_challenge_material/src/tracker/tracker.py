@@ -5,7 +5,8 @@ import torch.nn.functional as F
 import motmetrics as mm
 from torchvision.ops.boxes import clip_boxes_to_image, nms
 from munkres import Munkres, print_matrix
-from kalman_filter import KalmanFilter_XYHW
+import cv2
+import numpy as np
 
 DISASSOCIATE = 1e9
 WARM_UP = 10
@@ -17,6 +18,41 @@ def _process_nans(matrix):
                 matrix[i][j] = DISASSOCIATE
                 
     return matrix
+
+
+class KalmanFilter_XYHW(object):
+    def __init__(self):
+        self.kf_xy = KalmanFilter()
+        self.kf_hw = KalmanFilter()
+        
+    def detect(self, c_X, c_Y, c_H, c_W):
+        x, y = self.kf_xy.predict(c_X, c_Y)
+        h, w = self.kf_xy.predict(c_H, c_W)
+        return np.array([x,y,h,w])[:, 0]
+    
+    
+class KalmanFilter(object):
+    def __init__(self):
+        self.kf = cv2.KalmanFilter(4,2)
+        self.kf.transitionMatrix = np.array([[1, 0, 1, 0],
+                                            [0, 1, 0, 1],
+                                            [0, 0, 1, 0],
+                                            [0, 0, 0, 1]], dtype=np.float32)
+
+        self.kf.measurementMatrix = np.array([[1, 0, 0, 0],
+                                              [0, 1, 0, 0]], dtype=np.float32)
+        
+    def predict(self, coord1, coord2):
+        '''
+            Point estimation of the next point using Kalman predict and correct
+        '''
+        
+        measured = np.array([[np.float32(coord1)], [np.float32(coord2)]])
+        self.kf.correct(measured) # first, we correct the KF with the new measurement of the bbox coordinate
+        predicted = self.kf.predict() # then, we predict the bbox coordinate for the next frame
+        c_1, c_2 = predicted[0], predicted[1] 
+        return c_1, c_2
+        
 
 class Tracker:
     """
@@ -75,16 +111,11 @@ class Tracker:
         if self.tracks:
             track_ids = [t.id for t in self.tracks]
             track_boxes = np.stack([t.box.numpy() for t in self.tracks], axis=0)
-            track_kf_estimations = np.stack([t.kf_estimations.numpy() for t in self.tracks], axis=0)
+            track_kf_estimations = np.stack([t.kf_estimations for t in self.tracks], axis=0)
             track_kfs = [t.kf for t in self.tracks]
             
             # compute the distance based on IoU (distance=1-IoU)
-            distance = mm.distances.iou_matrix(track_boxes, boxes.numpy(), max_iou=0.5)
-            
-            for i in range(len(distance)):
-                for j in range(len(distance[0])):
-                    if np.isnan(distance[i][j]):
-                        distance[i][j] = DISASSOCIATE
+            distance = self._compute_miou_distances(boxes.numpy(), track_boxes, track_kf_estimations, max_iou=0.5)
             
             # if there are more tracks than detected objects, we traspose the matrix and
             # process it in the "inversed" way:
@@ -105,19 +136,27 @@ class Tracker:
                     t,d = as_idx[0], as_idx[1] # tracks, detections
                     
                 self.tracks[t].box = boxes[d]
+                self.tracks[t].kf_estimations = self.tracks[t].kf.detect(boxes[d][0],
+                                                                         boxes[d][1],
+                                                                         boxes[d][2],
+                                                                         boxes[d][3])
                 
-                
+            # create the cost matrix with all np.inf except assign "0" for the 
+            # indexes that the hungarian algo associated
+            distance = np.full_like(distance, np.inf)
+            for as_idx in indexes:
+                distance[as_idx] = 0
+            
             # removing lost tracks
             remove_tracks_id = []
             if t_flag:
-                distance_t = np.transpose(distance)
+                distance_t = distance.T
             else:
                 distance_t = distance
                 
             for t,dist in zip(self.tracks, distance_t):
                 # Numpy transpose is quite buggy... 
                 if np.all(dist>DISASSOCIATE-100): # no detection associated to a track
-                    print("removed track!")
                     remove_tracks_id.append(t.id)
             self.tracks = [t for t in self.tracks\
                     if t.id not in remove_tracks_id]
@@ -128,17 +167,15 @@ class Tracker:
             if t_flag:
                 distance_t = distance
             else:
-                distance_t = np.transpose(distance)
+                distance_t = distance.T
             for d,dist in enumerate(distance_t):
                 if np.all(dist>DISASSOCIATE-100): # no track associated w/ detection, so add new track as the detection
-                    print("Added new track!")
                     new_boxes.append(boxes[d])
                     new_scores.append(scores[d])
             self.add(new_boxes, new_scores)
             
         else:
             self.add(boxes, scores)
-            
             
             
     def step(self, frame):
@@ -157,19 +194,20 @@ class Tracker:
 
         self.im_index += 1
 
+
     def get_results(self):
         return self.results
     
-    @staticmethod
-    def _compute_miou_distances(self, boxes, tracks, kalman_estimations):
-        distance_tracks = mm.distances.iou_matrix(tracks, boxes.numpy(), max_iou=0.5)
-        distance_kalman = mm.distances.iou_matrix(kalman_estimations, boxes.numpy(), max_iou=0.5)
+    
+    def _compute_miou_distances(self, boxes, tracks, kalman_estimations, max_iou=0.5):
+        distance_tracks = mm.distances.iou_matrix(tracks, boxes, max_iou)
+        distance_kalman = mm.distances.iou_matrix(kalman_estimations, boxes, max_iou)
         
         distance_tracks = _process_nans(distance_tracks)
         distance_kalman = _process_nans(distance_kalman)
         
         # first we let the Kalman filter warm-up, so we do not take into account its predictions
-        # but as frames are processed, we give more importance to its predictions.
+        # but as frames are processed, we give more importance to them.
         l = 0
         if self.im_index > 3*WARM_UP:
             l = 1
@@ -177,6 +215,7 @@ class Tracker:
             l = 0.9
         elif self.im_index > WARM_UP:
             l = 0.7
+        
         
         # pondered result depending on l value
         miou_pondered = (1-l)*distance_tracks + l*distance_kalman
@@ -192,4 +231,4 @@ class Track(object):
         self.score = score
         self.id = track_id
         self.kf = KalmanFilter_XYHW()
-        self.kl_estimations = self.kf.detect(box[0], box[1], box[2], box[3])
+        self.kf_estimations = self.kf.detect(box[0], box[1], box[2], box[3])
