@@ -11,7 +11,7 @@ import numpy as np
 DISASSOCIATE = 1e9
 WARM_UP = 4
 PATIENCE_RMV = 10
-PATIENCE_INIT = 0
+PATIENCE_INIT = 1
 
 def _process_nans(matrix):
     for i in range(len(matrix)):
@@ -65,9 +65,9 @@ class Track(object):
         self.id = track_id
         self.kf = KalmanFilter_XYHW()
         self.kf_estimation = self.kf.detect(box[0], box[1], box[2], box[3])
-        self.active_track = True
-        self.frames_since_recent_track = 0 # How many frames has passed since the track was detected
-        self.frames_consecutive_track = 0 # How many frames has been the track consecutively detected
+        self.is_active = False
+        self.frames_since_recent_track = 0 # How many frames have passed since the track was detected
+        self.frames_consecutive_track = 0 # How many frames have been the track consecutively detected
         self.n_frames_track = 0 # In how many frames from the sequence has the track been in
 
 class Tracker:
@@ -125,11 +125,11 @@ class Tracker:
     
     def data_association(self, boxes, scores):
         if self.tracks:
-            track_ids = [t.id for t in self.tracks]
+            # track_ids = [t.id for t in self.tracks]
+            # track_kfs = [t.kf for t in self.tracks]
             track_boxes = np.stack([t.box.numpy() for t in self.tracks], axis=0)
             track_kf_estimation = np.stack([t.kf_estimation for t in self.tracks], axis=0)
-            track_kfs = [t.kf for t in self.tracks]
-            
+
             # compute the distance based on IoU (distance=1-IoU)
             distance = self._compute_miou_distances(boxes.numpy(), track_boxes, track_kf_estimation, max_iou=0.5)
             
@@ -152,24 +152,24 @@ class Tracker:
                     t,d = as_idx[0], as_idx[1] # tracks, detections
                     
                 self.tracks[t].box = boxes[d]
-                self.tracks[t].kf_estimation = self.tracks[t].kf.detect(boxes[d][0],
+                self.tracks[t].n_frames_track += 1
+                self.tracks[t].frames_consecutive_track += 1
+                self.tracks[t].frames_since_recent_track = 0
+                
+                if self.im_index <= PATIENCE_INIT: # At the beginning we consider all detections tracks
+                    self.tracks[t].is_active = True
+                    self.tracks[t].kf_estimation = self.tracks[t].kf.detect(boxes[d][0],
                                                                          boxes[d][1],
                                                                          boxes[d][2],
                                                                          boxes[d][3])
-                self.tracks[t].n_frames_track += 1
-                self.tracks[t].active_track = True
-                self.tracks[t].frames_since_recent_track = 0
-                    
-                """
-                # if track just been detected, we wait PATIENCE_INIT frames to active that track
-                # this is to avoid FP is the detections
-                if self.tracks[t].frames_consecutive_track < PATIENCE_INIT:
-                    self.tracks[t].frames_consecutive_track +=1
-                if self.tracks[t].frames_consecutive_track >= PATIENCE_INIT:
-                    if self.tracks[t].active_track == False:
-                        self.tracks[t].active_track = True
-                        self.tracks[t].frames_since_recent_track = 0   
-                """
+                elif self.im_index > PATIENCE_INIT and self.tracks[t].frames_consecutive_track > PATIENCE_INIT:
+                    self.tracks[t].is_active = True
+                    # only update the kalman filter estimations if and only if the 
+                    # the track is active and it has passed the PATIENCE INIT value
+                    self.tracks[t].kf_estimation = self.tracks[t].kf.detect(boxes[d][0],
+                                                                         boxes[d][1],
+                                                                         boxes[d][2],
+                                                                         boxes[d][3])
                                  
             # create the cost matrix with all np.inf except assign "0" for the 
             # indexes that the hungarian algo associated
@@ -185,13 +185,13 @@ class Tracker:
                 distance_t = distance
             for t,dist in zip(self.tracks, distance_t):
                 # Numpy transpose is quite buggy... 
-                if np.all(dist>(DISASSOCIATE-100)): # no detection associated to a track
+                if np.all(dist>DISASSOCIATE): # no detection associated to a track
                     if t.frames_since_recent_track == PATIENCE_RMV: # if patience reached remove track
                         print(f"track {t.id} removed!")
                         remove_tracks_id.append(t.id)
                     else:
-                        t.active_track = False
                         t.frames_since_recent_track += 1
+                        t.frames_consecutive_track == 0
                         # we update the kf_estimation just in case the tracker
                         # recovers sight of the lost track in the following detections
                         t.kf_estimation = t.kf.detect(t.kf_estimation[0],
@@ -211,7 +211,7 @@ class Tracker:
             else:
                 distance_t = distance.T
             for d,dist in enumerate(distance_t):
-                if np.all(dist>(DISASSOCIATE-100)): # no track associated w/ detection, so add new track as the detection
+                if np.all(dist>DISASSOCIATE): # no track associated w/ detection, so add new track as the detection
                     new_boxes.append(boxes[d])
                     new_scores.append(scores[d])
                     print(f"New track added!")
@@ -235,10 +235,13 @@ class Tracker:
                 self.results[t.id] = {}
             
             # only return those tracks that are active
-            if t.active_track == True:
+            if t.is_active == True:
                 self.results[t.id][self.im_index] = np.concatenate([t.box.cpu().numpy(), np.array([t.score])])
 
         self.im_index += 1
+        # set all of them to False again
+        for t in self.tracks:
+            t.is_active = False
 
 
     def get_results(self):
@@ -258,9 +261,9 @@ class Tracker:
         
         for i,t in enumerate(self.tracks):
             if t.n_frames_track >= int(1.5*WARM_UP):
-                l[i] = 0.7
+                l[i] = 0.9
             elif t.n_frames_track >= WARM_UP:
-                l[i] = 0.3
+                l[i] = 0.5
             
         
         # pondered result depending on l value
