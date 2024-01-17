@@ -1,17 +1,20 @@
-from torchvision.transforms import v2 as T
-import torch 
-from engine import train_one_epoch, evaluate
-from dataset import PennFudanDataset, MOT16ObjDetectMasked
-from model import ObjDetector
 import utils
 import os
 import sys
 import random
+
+import torch 
+from torchvision.transforms import v2 as T
 from torchvision.transforms import functional as F
+
+from engine import train_one_epoch, evaluate
+from dataset import PennFudanDataset, MOT16ObjDetectMasked
+from model import ObjDetector
+
 
 sys.path.append(os.path.join(os.getcwd(), ".."))
 from src.tracker.data_obj_detect import MOT16ObjDetect
-from src.tracker.object_detector import FRCNN_FPN
+from src.tracker.object_detector import FRCNN_FPN, ObjDetector
 
 def get_transform(train):
     transforms = []
@@ -67,33 +70,31 @@ if __name__ == '__main__':
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    # our dataset has two classes only - background and person
-    num_classes = 2
-    obj_detect_nms_thresh = 0.3
+    obj_detect_nms_thresh = 0.35
     obj_detect_model_file = os.path.join("../models/faster_rcnn_fpn.model")
     
     # use our dataset and defined transformations
-
-    dataset = MOT16ObjDetect(root='../data/MOT16/train', transforms=obj_detect_transforms(train=True))
+    dataset = MOT16ObjDetectMasked(root='../data/MOT16/train', transforms=obj_detect_transforms(train=True))
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=2,
+        batch_size=3,
         shuffle=True,
         num_workers=os.cpu_count(),
         collate_fn=collate_fn
     )
 
     # get the model using our helper function
-    # model = ObjDetector(model_path="../models/maskrcnn_model.pth")
-    # model = ObjDetector()
+    #obj_detect = ObjDetector(model_path="../models/maskrcnn_model.pth").model
+    # obj_detect = ObjDetector(num_classes=2, nms_thresh=obj_detect_nms_thresh).model
     
-    obj_detect = FRCNN_FPN(num_classes=num_classes, nms_thresh=obj_detect_nms_thresh)
+    obj_detect = FRCNN_FPN(num_classes=2, nms_thresh=obj_detect_nms_thresh)
     obj_detect_state_dict = torch.load(obj_detect_model_file,map_location=lambda storage, loc: storage)
     obj_detect.load_state_dict(obj_detect_state_dict)
     obj_detect.eval()     # set to evaluation mode
     obj_detect.to(device) # load detector to GPU or CPU
+    
 
     # move model to the right device
     obj_detect.to(device)
@@ -114,8 +115,7 @@ if __name__ == '__main__':
         gamma=0.1
     )
 
-    # let's train it just for 2 epochs
-    num_epochs = 2
+    num_epochs = 1
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
