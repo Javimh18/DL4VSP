@@ -11,7 +11,7 @@ import numpy as np
 DISASSOCIATE = 1e9
 WARM_UP = 4
 PATIENCE_RMV = 10
-PATIENCE_INIT = 1
+PATIENCE_INIT = 0
 
 def _process_nans(matrix):
     for i in range(len(matrix)):
@@ -37,12 +37,15 @@ class KalmanFilter(object):
     def __init__(self):
         self.kf = cv2.KalmanFilter(4,2)
         self.kf.transitionMatrix = np.array([[1, 0, 1, 0],
-                                            [0, 1, 0, 1],
-                                            [0, 0, 1, 0],
-                                            [0, 0, 0, 1]], dtype=np.float32)
+                                             [0, 1, 0, 1],
+                                             [0, 0, 1, 0],
+                                             [0, 0, 0, 1]], dtype=np.float32)
 
         self.kf.measurementMatrix = np.array([[1, 0, 0, 0],
                                               [0, 1, 0, 0]], dtype=np.float32)
+    
+        #self.kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.01
+        #self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32) * 0.1
         
     def predict(self, coord1, coord2):
         '''
@@ -158,22 +161,26 @@ class Tracker:
                 
                 if self.im_index <= PATIENCE_INIT: # At the beginning we consider all detections tracks
                     self.tracks[t].is_active = True
+                    #"""
                     self.tracks[t].kf_estimation = self.tracks[t].kf.detect(boxes[d][0],
                                                                          boxes[d][1],
                                                                          boxes[d][2],
                                                                          boxes[d][3])
+                    #"""
+        
                 elif self.im_index > PATIENCE_INIT and self.tracks[t].frames_consecutive_track > PATIENCE_INIT:
                     self.tracks[t].is_active = True
                     # only update the kalman filter estimations if and only if the 
                     # the track is active and it has passed the PATIENCE INIT value
+                    #"""
                     self.tracks[t].kf_estimation = self.tracks[t].kf.detect(boxes[d][0],
                                                                          boxes[d][1],
                                                                          boxes[d][2],
                                                                          boxes[d][3])
-                                 
+                    #"""
             # create the cost matrix with all np.inf except assign "0" for the 
             # indexes that the hungarian algo associated
-            distance = np.full_like(distance, np.inf)
+            distance = np.full_like(distance, DISASSOCIATE)
             for as_idx in indexes:
                 distance[as_idx] = 0
             
@@ -185,20 +192,23 @@ class Tracker:
                 distance_t = distance
             for t,dist in zip(self.tracks, distance_t):
                 # Numpy transpose is quite buggy... 
-                if np.all(dist>DISASSOCIATE): # no detection associated to a track
+                if np.all(dist>DISASSOCIATE-10): # no detection associated to a track
                     if t.frames_since_recent_track == PATIENCE_RMV: # if patience reached remove track
-                        print(f"track {t.id} removed!")
+                        #print(f"track {t.id} removed!")
                         remove_tracks_id.append(t.id)
                     else:
                         t.frames_since_recent_track += 1
                         t.frames_consecutive_track == 0
                         # we update the kf_estimation just in case the tracker
                         # recovers sight of the lost track in the following detections
+                        #"""
                         t.kf_estimation = t.kf.detect(t.kf_estimation[0],
                                                        t.kf_estimation[1],
                                                        t.kf_estimation[2],
                                                        t.kf_estimation[3])
-                        print(f"track {t.id} patience = {t.frames_since_recent_track}")
+                        #"""
+                        #print(f"track {t.id} patience = {t.frames_since_recent_track}")
+                        
             # removing tracks in the remove_tracks_id array
             self.tracks = [t for t in self.tracks\
                     if t.id not in remove_tracks_id]
@@ -211,10 +221,10 @@ class Tracker:
             else:
                 distance_t = distance.T
             for d,dist in enumerate(distance_t):
-                if np.all(dist>DISASSOCIATE): # no track associated w/ detection, so add new track as the detection
+                if np.all(dist>DISASSOCIATE-10): # no track associated w/ detection, so add new track as the detection
                     new_boxes.append(boxes[d])
                     new_scores.append(scores[d])
-                    print(f"New track added!")
+                    #print(f"New track added!")
             self.add(new_boxes, new_scores)
             
         else:
@@ -259,12 +269,13 @@ class Tracker:
         # but as frames are processed, we give more importance to them.
         l = np.zeros(distance_kalman.shape[0])
         
+        #"""
         for i,t in enumerate(self.tracks):
             if t.n_frames_track >= int(1.5*WARM_UP):
                 l[i] = 0.9
             elif t.n_frames_track >= WARM_UP:
                 l[i] = 0.5
-            
+        #""" 
         
         # pondered result depending on l value
         miou_pondered = (1-l[:, np.newaxis])*distance_tracks + l[:, np.newaxis]*distance_kalman

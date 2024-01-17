@@ -13,7 +13,7 @@ from object_detector import FRCNN_FPN, ObjDetector
 image = read_image("../../data/MOT16/train/MOT16-04/img1/000001.jpg")
 
 # obj_detect_model_file = os.path.join("../../models/maskrcnn_model.pth")
-obj_detect_model_file = os.path.join("../../models/finetuned_faster_rcnn.model")
+obj_detect_model_file = os.path.join("../../models/finetuned_masked_rcnn.model")
 def get_transform(train):
     transforms = []
     if train:
@@ -29,14 +29,18 @@ if __name__ == "__main__":
     obj_detect_nms_thresh = 0.3
     
     
-    #model = ObjDetector(model_path=obj_detect_model_file).model.to(device)
+    model = ObjDetector(nms_thresh=0.5).model
+    obj_detect_state_dict = torch.load(obj_detect_model_file,map_location=lambda storage, loc: storage)
+    model.load_state_dict(obj_detect_state_dict)
+    model.to(device)
     
-    #"""
+    
+    """
     model = FRCNN_FPN(num_classes=2, nms_thresh=obj_detect_nms_thresh)
     obj_detect_state_dict = torch.load(obj_detect_model_file,map_location=lambda storage, loc: storage)
     model.load_state_dict(obj_detect_state_dict)
     model.to(device)
-    #"""
+    """
 
     model.eval()
     with torch.no_grad():
@@ -53,6 +57,6 @@ if __name__ == "__main__":
     pred_boxes = pred["boxes"].long()
     output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
 
-    output_image = T.ToPILImage()(output_image).save("obj_detect_results/res_finetuned_faster_000699.jpg")
+    output_image = T.ToPILImage()(output_image).save("obj_detect_results/res_finetuned_masked_000699.jpg")
     
     
