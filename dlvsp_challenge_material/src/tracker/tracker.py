@@ -7,11 +7,14 @@ from torchvision.ops.boxes import clip_boxes_to_image, nms
 from munkres import Munkres, print_matrix
 import cv2
 import numpy as np
+# from kalman_filter import KalmanFilter as KF
 
 DISASSOCIATE = 1e9
 WARM_UP = 4
 PATIENCE_RMV = 10
 PATIENCE_INIT = 0
+DELTA_T_KALMAN = 1 # increments in time between frames (Pondered mean of all the frame rates of the dataset)
+ACC = 1
 
 def _process_nans(matrix):
     for i in range(len(matrix)):
@@ -36,16 +39,39 @@ class KalmanFilter_XYHW(object):
 class KalmanFilter(object):
     def __init__(self):
         self.kf = cv2.KalmanFilter(4,2)
-        self.kf.transitionMatrix = np.array([[1, 0, 1, 0],
-                                             [0, 1, 0, 1],
+        # A matrix in the priori estimations (state transition)
+        self.kf.transitionMatrix = np.array([[1, 0, DELTA_T_KALMAN**2, 0],
+                                             [0, 1, 0, DELTA_T_KALMAN**2],
                                              [0, 0, 1, 0],
                                              [0, 0, 0, 1]], dtype=np.float32)
-
+        
+        # H matrix in the measure estimations
         self.kf.measurementMatrix = np.array([[1, 0, 0, 0],
                                               [0, 1, 0, 0]], dtype=np.float32)
-    
-        #self.kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.01
-        #self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32) * 0.1
+        
+        # Q matrix, the initial process noise covariance
+        self.kf.processNoiseCov = np.array([[1, 0, 1, 0],
+                                            [0, 1, 0, 1],
+                                            [1, 0, 1, 0],
+                                            [0, 1, 0, 1]], dtype=np.float32) * ACC**2
+        
+        # R matrix, the initial measurements noise covariance
+        self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32)
+        
+        """
+        # B matrix in the priori estimations (control matrix; acceleration related)
+        self.kf.controlMatrix = np.array([[(DELTA_T_KALMAN**2)/2, 0],
+                                           [0, (DELTA_T_KALMAN**2)/2],
+                                           [DELTA_T_KALMAN,0],
+                                           [0,DELTA_T_KALMAN]], dtype=np.float32)
+        """
+        """
+        # Q matrix, the initial process noise covariance
+        self.kf.processNoiseCov = np.array([[(DELTA_T_KALMAN**4)/4, 0, (DELTA_T_KALMAN**3)/2, 0],
+                                             [0, (DELTA_T_KALMAN**4)/4, 0, (DELTA_T_KALMAN**3)/2],
+                                             [(DELTA_T_KALMAN**3)/2, 0, DELTA_T_KALMAN**2, 0],
+                                             [0, (DELTA_T_KALMAN**3)/2, 0, DELTA_T_KALMAN**2]], dtype=np.float32) * ACC**2
+        """
         
     def predict(self, coord1, coord2):
         '''
@@ -134,7 +160,7 @@ class Tracker:
             track_kf_estimation = np.stack([t.kf_estimation for t in self.tracks], axis=0)
 
             # compute the distance based on IoU (distance=1-IoU)
-            distance = self._compute_miou_distances(boxes.numpy(), track_boxes, track_kf_estimation, max_iou=0.5)
+            distance = self._compute_miou_distances(boxes.numpy(), track_boxes, track_kf_estimation, max_iou=0.4)
             
             # if there are more tracks than detected objects, we traspose the matrix and
             # process it in the "inversed" way:
@@ -269,13 +295,11 @@ class Tracker:
         # but as frames are processed, we give more importance to them.
         l = np.zeros(distance_kalman.shape[0])
         
-        #"""
         for i,t in enumerate(self.tracks):
             if t.n_frames_track >= int(1.5*WARM_UP):
-                l[i] = 0.9
-            elif t.n_frames_track >= WARM_UP:
                 l[i] = 0.5
-        #""" 
+            elif t.n_frames_track >= WARM_UP:
+                l[i] = 0.2
         
         # pondered result depending on l value
         miou_pondered = (1-l[:, np.newaxis])*distance_tracks + l[:, np.newaxis]*distance_kalman
