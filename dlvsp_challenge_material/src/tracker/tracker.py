@@ -15,7 +15,7 @@ import time
 # from kalman_filter import KalmanFilter as KF
 
 DISASSOCIATE = 1e9
-WARM_UP = 4
+WARM_UP = 10
 PATIENCE_RMV = 10
 PATIENCE_INIT = 0
 DELTA_T_KALMAN = 1 # increments in time between frames (Pondered mean of all the frame rates of the dataset)
@@ -25,14 +25,13 @@ FEAT_LEN = 2048
 DIM_FEAT_INPUT = 224
 MEAN_IM = [0.485, 0.456, 0.406]
 STD_IM = [0.229, 0.224, 0.225]
-MAX_DESCRIPTORS = 3
+MAX_DESCRIPTORS = 20
 
 def _process_nans(matrix):
     for i in range(len(matrix)):
         for j in range(len(matrix[0])):
             if np.isnan(matrix[i][j]):
-                matrix[i][j] = DISASSOCIATE
-                
+                matrix[i][j] = DISASSOCIATE  
     return matrix
 
 def _crop_box(image, box):
@@ -78,7 +77,6 @@ class Tracker:
         # put the model in eval mode
         self.feat_extractor.eval()
         
-        
     def reset(self, hard=True):
         self.tracks = []
         
@@ -118,13 +116,12 @@ class Tracker:
         return box
     
     def data_association(self, boxes, scores, frame):
-        max_iou = 0.5
+        max_iou = 0.35
         if self.tracks:
             track_boxes = np.stack([t.box.numpy() for t in self.tracks], axis=0)
             track_kf_estimation = np.stack([t.kf_estimation for t in self.tracks], axis=0)
 
             # compute the distance based on IoU (distance=1-IoU)
-            start_t = time.time()
             distance = self._compute_distances(boxes.numpy(), track_boxes, track_kf_estimation, frame, max_iou)
             
             # if there are more tracks than detected objects, we traspose the matrix and
@@ -188,7 +185,8 @@ class Tracker:
             for as_idx in indexes:
                 distance[as_idx] = 0
             
-            # compiling lost tracks
+            # compiling lost tracks, if t_flag == True then shape is (detections, tracks)
+            # else (tracks, detections)
             remove_tracks_id = []
             if t_flag:
                 distance_t = distance.T
@@ -230,7 +228,7 @@ class Tracker:
             if len(new_boxes) > 0:
                 with torch.no_grad():
                     tensor_new_boxes = torch.stack(new_boxes, dim=0)
-                    # get the features from the feature extractor
+                    # get the features from the feature extractor and append them to the new tracks attributes
                     new_boxes_in_frame = _compose(frame.squeeze(0), tensor_new_boxes.numpy())
                     new_boxes_in_frame = new_boxes_in_frame.to(self.device)
                     tensor_new_feats = self.feat_extractor(new_boxes_in_frame)
@@ -242,8 +240,8 @@ class Tracker:
         else:
             # for better inference times
             with torch.no_grad():
-                start_t_add = time.time()
                 cropped_boxes = []
+                # get the features from the feature extractor and append them to the track
                 cropped_boxes = _compose(frame.squeeze(0), boxes.numpy())
                 cropped_boxes = cropped_boxes.to(self.device)
                 feat_cropped_boxes = self.feat_extractor(cropped_boxes)
@@ -281,6 +279,7 @@ class Tracker:
     
     
     def _compute_distances(self, boxes, tracks, kalman_estimations, frame, max_iou=0.5):
+        # compute distance based on IoU (distance=1-IoU)
         distance_tracks = mm.distances.iou_matrix(tracks, boxes, max_iou)
         distance_kalman = mm.distances.iou_matrix(kalman_estimations, boxes, max_iou)
         
@@ -292,14 +291,18 @@ class Tracker:
         l_1 = np.zeros(distance_kalman.shape[0])
         l_2 = 0.3
         
+        """
         for i,t in enumerate(self.tracks):
             if t.n_frames_track >= int(1.5*WARM_UP):
-                l_1[i] = 0.9
-            elif t.n_frames_track >= WARM_UP:
                 l_1[i] = 0.5
+            elif t.n_frames_track >= WARM_UP:
+                l_1[i] = 0.2
+        """
         
-        # pondered result depending on l value
+        # pondered result depending on l_1 value
         distance_track = (1-l_1[:, np.newaxis])*distance_tracks + l_1[:, np.newaxis]*distance_kalman
+        
+        # compute the similarity between the detections in the frame and the tracks stored in the tracker
         distance_app = self._compute_appearance_sim(boxes, frame)
         return l_2*distance_track + (1-l_2)*distance_app
     
@@ -316,12 +319,9 @@ class Tracker:
         for i, t in enumerate(self.tracks):
             descriptors = torch.stack(t.descriptors, dim=0)
             for j in range(box_feat.size(0)):
-                d_min = np.inf
                 d_cos = 1 - F.cosine_similarity(box_feat[j].unsqueeze(0), descriptors, dim=1)
-                d_cos = torch.min(d_cos).item()
-                if d_cos < d_min:
-                    d_min = d_cos
-                # once we've got the minimum distance between all descriptors
+                # get all distances and select the min
+                d_min = torch.min(d_cos).item()
                 d[i,j] = d_min
         
         return d   
@@ -335,7 +335,7 @@ class Track(object):
         self.box = box
         self.score = score
         self.id = track_id
-        self.kf = KalmanFilter_XYHW()
+        self.kf = KalmanFilterCoordinates()
         self.kf_estimation = self.kf.detect(box[0], box[1], box[2], box[3])
         self.is_active = False
         self.frames_since_recent_track = 0 # How many frames have passed since the track was detected
@@ -344,7 +344,7 @@ class Track(object):
         self.descriptors = [feat_desc] # Array with the descriptor tensor of the track (we keep the last 100 descriptors to compare)
         
         
-class KalmanFilter_XYHW(object):
+class KalmanFilterCoordinates(object):
     def __init__(self):
         self.kf_xy = KalmanFilter()
         self.kf_hw = KalmanFilter()
@@ -372,19 +372,18 @@ class KalmanFilter(object):
         self.kf.processNoiseCov = np.array([[1, 0, 1, 0],
                                             [0, 1, 0, 1],
                                             [1, 0, 1, 0],
-                                            [0, 1, 0, 1]], dtype=np.float32) * ACC**2
+                                            [0, 1, 0, 1]], dtype=np.float32) * 1e-5
         
         # R matrix, the initial measurements noise covariance
-        self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32)
+        self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32) * 0.01
         
         
     def predict(self, coord1, coord2):
         '''
             Point estimation of the next point using Kalman predict and correct
         '''
-        
         measured = np.array([[np.float32(coord1)], [np.float32(coord2)]])
-        self.kf.correct(measured) # first, we correct the KF with the new measurement of the bbox coordinate
-        predicted = self.kf.predict() # then, we predict the bbox coordinate for the next frame
+        self.kf.correct(measured) # correct the KF with the new measurement of the bbox coordinate
+        predicted = self.kf.predict() # predict the bbox coordinate for the next frame
         c_1, c_2 = predicted[0], predicted[1] 
         return c_1, c_2
