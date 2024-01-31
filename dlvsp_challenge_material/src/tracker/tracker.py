@@ -15,17 +15,18 @@ import time
 # from kalman_filter import KalmanFilter as KF
 
 DISASSOCIATE = 1e9
-WARM_UP = 10
-PATIENCE_RMV = 10
+WARM_UP = 4
+PATIENCE_RMV = 30
 PATIENCE_INIT = 0
 DELTA_T_KALMAN = 1 # increments in time between frames (Pondered mean of all the frame rates of the dataset)
 ACC = 1
 
-FEAT_LEN = 2048
+FEAT_LEN = 4096
 DIM_FEAT_INPUT = 224
 MEAN_IM = [0.485, 0.456, 0.406]
 STD_IM = [0.229, 0.224, 0.225]
-MAX_DESCRIPTORS = 20
+MAX_DESCRIPTORS = 30
+MIN_SCORE = 0.5
 
 def _process_nans(matrix):
     for i in range(len(matrix)):
@@ -67,7 +68,7 @@ class Tracker:
         
         # FEATURE EXTRACTOR FOR DEEP SIMILARITY DISTANCE
         # Load pre-trained ResNet-50 model
-        resnet50 = models.resnet50(pretrained=True)
+        resnet50 = models.vgg11(pretrained=True)
         # Remove the classifier (fully connected) layer
         self.feat_extractor = nn.Sequential(*list(resnet50.children())[:-1])
         self.feat_extractor.to(self.device)
@@ -116,10 +117,11 @@ class Tracker:
         return box
     
     def data_association(self, boxes, scores, frame):
-        max_iou = 0.35
+        max_iou = 0.5
         if self.tracks:
             track_boxes = np.stack([t.box.numpy() for t in self.tracks], axis=0)
             track_kf_estimation = np.stack([t.kf_estimation for t in self.tracks], axis=0)
+            track_scores = np.stack([t.score.numpy() for t in self.tracks], axis=0)
 
             # compute the distance based on IoU (distance=1-IoU)
             distance = self._compute_distances(boxes.numpy(), track_boxes, track_kf_estimation, frame, max_iou)
@@ -257,6 +259,7 @@ class Tracker:
         """
         # object detection
         boxes, scores = self.obj_detect.detect(frame['img'])
+
         self.data_association(boxes, scores, frame['img'])
 
         # results
@@ -289,15 +292,13 @@ class Tracker:
         # first we let the Kalman filter warm-up, so we do not take into account its predictions
         # but as frames are processed, we give more importance to them.
         l_1 = np.zeros(distance_kalman.shape[0])
-        l_2 = 0.3
+        l_2 = 0.5
         
-        """
         for i,t in enumerate(self.tracks):
             if t.n_frames_track >= int(1.5*WARM_UP):
-                l_1[i] = 0.5
+                l_1[i] = 0.0
             elif t.n_frames_track >= WARM_UP:
-                l_1[i] = 0.2
-        """
+                l_1[i] = 0.0
         
         # pondered result depending on l_1 value
         distance_track = (1-l_1[:, np.newaxis])*distance_tracks + l_1[:, np.newaxis]*distance_kalman
@@ -358,23 +359,23 @@ class KalmanFilterCoordinates(object):
 class KalmanFilter(object):
     def __init__(self):
         self.kf = cv2.KalmanFilter(4,2)
-        # A matrix in the priori estimations (state transition)
+        # (A) matrix, the priori estimations (state transition)
         self.kf.transitionMatrix = np.array([[1, 0, DELTA_T_KALMAN**2, 0],
                                              [0, 1, 0, DELTA_T_KALMAN**2],
                                              [0, 0, 1, 0],
                                              [0, 0, 0, 1]], dtype=np.float32)
         
-        # H matrix in the measure estimations
+        # (H) matrix, measure estimations
         self.kf.measurementMatrix = np.array([[1, 0, 0, 0],
                                               [0, 1, 0, 0]], dtype=np.float32)
         
-        # Q matrix, the initial process noise covariance
+        # (Q) matrix, the initial process noise covariance
         self.kf.processNoiseCov = np.array([[1, 0, 1, 0],
                                             [0, 1, 0, 1],
                                             [1, 0, 1, 0],
                                             [0, 1, 0, 1]], dtype=np.float32) * 1e-5
         
-        # R matrix, the initial measurements noise covariance
+        # (R) matrix, the initial measurements noise covariance
         self.kf.measurementNoiseCov = np.eye(2, dtype=np.float32) * 0.01
         
         
